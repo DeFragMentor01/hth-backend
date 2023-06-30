@@ -10,7 +10,7 @@ const host = "RENDER" in process.env ? `0.0.0.0` : null;
 async function routes(fastify, options) {
   fastify.register(formBody);
   fastify.register(cors, {
-    origin: "https://hth-front.vercel.app",
+    origin: "https://hth-front-peach.vercel.app/",
   });
   fastify.get("/", async (request, reply) => {
     return { hello: "world" };
