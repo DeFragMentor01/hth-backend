@@ -92,8 +92,7 @@ fastify.get("/users", async (request, reply) => {
     reply.code(500).send({ error: process.env.NODE_ENV === 'development' ? error : "Internal Server Error" });
   }
 });
-
-
+  
   fastify.post("/register", async (request, reply) => {
     try {
       const {
