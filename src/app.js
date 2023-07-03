@@ -71,7 +71,7 @@ async function routes(fastify, options) {
     }
   });
 
- fastify.get("/users", async (request, reply) => {
+fastify.get("/users", async (request, reply) => {
   try {
     const { page = 1, size = 100 } = request.query;
     const offset = (page - 1) * size;
@@ -80,14 +80,19 @@ async function routes(fastify, options) {
     const result = await client.query("SELECT * FROM users ORDER BY id LIMIT $1 OFFSET $2", [size, offset]);
     const users = result.rows;
 
+    // Query for total number of users
+    const totalResult = await client.query("SELECT COUNT(*) FROM users");
+    const totalUsers = totalResult.rows[0].count;
+
     client.release();
 
-    reply.code(200).send(users);
+    reply.code(200).send({ users, total: totalUsers });
   } catch (error) {
     console.error("Error fetching user data:", error);
-    reply.code(500).send({ error: "Internal Server Error" });
+    reply.code(500).send({ error: process.env.NODE_ENV === 'development' ? error : "Internal Server Error" });
   }
 });
+
 
   fastify.post("/register", async (request, reply) => {
     try {
