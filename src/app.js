@@ -71,20 +71,23 @@ async function routes(fastify, options) {
     }
   });
 
-  fastify.get("/users", async (request, reply) => {
-    try {
-      const client = await pool.connect();
-      const result = await client.query("SELECT * FROM users");
-      const users = result.rows;
+ fastify.get("/users", async (request, reply) => {
+  try {
+    const { page = 1, size = 100 } = request.query;
+    const offset = (page - 1) * size;
 
-      client.release();
+    const client = await pool.connect();
+    const result = await client.query("SELECT * FROM users ORDER BY id LIMIT $1 OFFSET $2", [size, offset]);
+    const users = result.rows;
 
-      reply.code(200).send(users);
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      reply.code(500).send({ error: "Internal Server Error" });
-    }
-  });
+    client.release();
+
+    reply.code(200).send(users);
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    reply.code(500).send({ error: "Internal Server Error" });
+  }
+});
 
   fastify.post("/register", async (request, reply) => {
     try {
