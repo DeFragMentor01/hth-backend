@@ -71,28 +71,91 @@ async function routes(fastify, options) {
     }
   });
 
-fastify.get("/users", async (request, reply) => {
+fastify.get("/users/filters", async (request, reply) => {
   try {
-    const { page = 1, size = 100, filters = {} } = request.query;
-    const offset = (page - 1) * size;
-    
-    let filterQueries = [];
-    let paramValues = [];
-    let i = 3;
+    const { country, state, city } = request.query;
+    const client = await pool.connect();
+    let query = 'SELECT DISTINCT ';
+    let params = [];
 
-    for (let key in filters) {
-      filterQueries.push(`${key} = ANY($${i}::text[])`);
-      paramValues.push(filters[key]);
-      i++;
+    const allowedFields = [
+      'username',
+      'dateofbirth',
+      'gender',
+      'tribe',
+      'community',
+      'city',
+      'state',
+      'country',
+      'age'
+    ];
+
+    query += allowedFields.join(', ');
+
+    if (!country) {
+      query += ' FROM users';
+    } else if (!state) {
+      query += ' FROM users WHERE country = $1';
+      params.push(country);
+    } else if (!city) {
+      query += ' FROM users WHERE country = $1 AND state = $2';
+      params.push(country, state);
+    } else {
+      query += ' FROM users WHERE country = $1 AND state = $2 AND city = $3';
+      params.push(country, state, city);
     }
 
+    const result = await client.query(query, params);
+    client.release();
+    reply.code(200).send(result.rows.map(row => Object.values(row)[0]));
+
+  } catch (error) {
+    console.error("Error fetching filter options:", error);
+    reply.code(500).send({ error: process.env.NODE_ENV === 'development' ? error : "Internal Server Error" });
+  }
+});
+
+fastify.get("/users", async (request, reply) => {
+  try {
+    const { page = 1, size = 100, country, state, city, village } = request.query;
+    const offset = (page - 1) * size;
+
+    const allowedFields = [
+      'username',
+      'dateofbirth',
+      'gender',
+      'tribe',
+      'community',
+      'city',
+      'state',
+      'country',
+      'age'
+    ];
+
+    let query = `SELECT ${allowedFields.join(', ')} FROM users WHERE 1=1`;
+    let params = [size, offset];
+
+    if (country) {
+      params.push(country);
+      query += ` AND country = $${params.length}`;
+    }
+    if (state) {
+      params.push(state);
+      query += ` AND state = $${params.length}`;
+    }
+    if (city) {
+      params.push(city);
+      query += ` AND city = $${params.length}`;
+    }
+    if (village) {
+      params.push(village);
+      query += ` AND village = $${params.length}`;
+    }
+
+    query += ' ORDER BY id LIMIT $1 OFFSET $2';
+
     const client = await pool.connect();
-    const result = await client.query(`
-      SELECT * FROM users 
-      ${filterQueries.length > 0 ? 'WHERE ' + filterQueries.join(' AND ') : ''}
-      ORDER BY id LIMIT $1 OFFSET $2`, 
-      [size, offset, ...paramValues]
-    );
+    const result = await client.query(query, params);
 
     const users = result.rows;
 
@@ -105,56 +168,6 @@ fastify.get("/users", async (request, reply) => {
     reply.code(200).send({ users, total: totalUsers });
   } catch (error) {
     console.error("Error fetching user data:", error);
-    reply.code(500).send({ error: process.env.NODE_ENV === 'development' ? error : "Internal Server Error" });
-  }
-});
-
-fastify.get("/users/filters", async (request, reply) => {
-  try {
-    const { filters = {} } = request.query;
-
-    let filterQueries = [];
-    let paramValues = [];
-    let i = 1;
-
-    for (let key in filters) {
-      filterQueries.push(`${key} = ANY($${i}::text[])`);
-      paramValues.push(filters[key]);
-      i++;
-    }
-
-    const client = await pool.connect();
-
-    // Adjust these queries to suit the columns you want to filter by
-    const countryResult = await client.query(`
-      SELECT DISTINCT country FROM users 
-      ${filterQueries.length > 0 ? 'WHERE ' + filterQueries.join(' AND ') : ''}
-    `);
-    const countries = countryResult.rows.map(row => row.country);
-
-    const stateResult = await client.query(`
-      SELECT DISTINCT state FROM users 
-      ${filterQueries.length > 0 ? 'WHERE ' + filterQueries.join(' AND ') : ''}
-    `);
-    const states = stateResult.rows.map(row => row.state);
-
-    const cityResult = await client.query(`
-      SELECT DISTINCT city FROM users 
-      ${filterQueries.length > 0 ? 'WHERE ' + filterQueries.join(' AND ') : ''}
-    `);
-    const cities = cityResult.rows.map(row => row.city);
-
-    const villageResult = await client.query(`
-      SELECT DISTINCT village FROM users 
-      ${filterQueries.length > 0 ? 'WHERE ' + filterQueries.join(' AND ') : ''}
-    `);
-    const villages = villageResult.rows.map(row => row.village);
-
-    client.release();
-
-    reply.code(200).send({ countries, states, cities, villages });
-  } catch (error) {
-    console.error("Error fetching filter options:", error);
     reply.code(500).send({ error: process.env.NODE_ENV === 'development' ? error : "Internal Server Error" });
   }
 });
