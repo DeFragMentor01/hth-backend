@@ -7,6 +7,8 @@ const villagesData = JSON.parse(rawData);
 // Assuming you already have a PostgreSQL database connection in your app
 const db = require('./database'); // Replace './your-database-connection' with the path to your database connection module
 
+console.log('Script executed successfully!');
+
 // Insert data into the villages table
 async function insertData() {
   try {
