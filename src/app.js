@@ -29,6 +29,69 @@ async function routes(fastify, options) {
       reply.code(500).send({ error: "Internal Server Error" });
     }
   });
+  
+  // Get list of all countries
+fastify.get('/countries', async (request, reply) => {
+  const client = await fastify.db.connect()
+
+  try {
+    const res = await client.query('SELECT * FROM countries')
+    return res.rows
+  } finally {
+    client.release()
+  }
+});
+
+// Get list of provinces for a specific country
+fastify.get('/provinces/:country_id', async (request, reply) => {
+  const { country_id } = request.params
+  const client = await fastify.db.connect()
+
+  try {
+    const res = await client.query('SELECT * FROM provinces WHERE country_id = $1', [country_id])
+    return res.rows
+  } finally {
+    client.release()
+  }
+});
+  // Get list of cities for a specific province
+fastify.get('/cities/:province_id', async (request, reply) => {
+  const { province_id } = request.params
+  const client = await fastify.db.connect()
+
+  try {
+    const res = await client.query('SELECT * FROM cities WHERE province_id = $1', [province_id])
+    return res.rows
+  } finally {
+    client.release()
+  }
+});
+
+// Get list of districts for a specific city
+fastify.get('/districts/:city_id', async (request, reply) => {
+  const { city_id } = request.params
+  const client = await fastify.db.connect()
+
+  try {
+    const res = await client.query('SELECT * FROM districts WHERE city_id = $1', [city_id])
+    return res.rows
+  } finally {
+    client.release()
+  }
+});
+
+// Get list of villages for a specific district
+fastify.get('/villages/:district_id', async (request, reply) => {
+  const { district_id } = request.params
+  const client = await fastify.db.connect()
+
+  try {
+    const res = await client.query('SELECT * FROM villages WHERE district_id = $1', [district_id])
+    return res.rows
+  } finally {
+    client.release()
+  }
+});
 
   fastify.post("/login", async (request, reply) => {
     try {
