@@ -107,47 +107,24 @@ fastify.get('/villages/:district_id', async (request, reply) => {
   }
 });
 
-  fastify.get('/villages', async (request, reply) => {
+ fastify.get('/villages', async (request, reply) => {
   const { country_id, province_id, city_id, district_id } = request.query;
   const client = await pool.connect();
 
-  let query = `
+  const query = `
     SELECT v.* 
-    FROM villages AS v
-    JOIN districts AS d ON v.district_id = d.id
-    JOIN cities AS c ON d.city_id = c.id
-    JOIN provinces AS p ON c.province_id = p.id
-    JOIN countries AS co ON p.country_id = co.id
-    WHERE `;
-  let params = [];
-  let counter = 1;
-
-  if (country_id) {
-    query += `co.id = $${counter} AND `;
-    params.push(country_id);
-    counter++;
-  }
-
-  if (province_id) {
-    query += `p.id = $${counter} AND `;
-    params.push(province_id);
-    counter++;
-  }
-
-  if (city_id) {
-    query += `c.id = $${counter} AND `;
-    params.push(city_id);
-    counter++;
-  }
-
-  if (district_id) {
-    query += `d.id = $${counter} AND `;
-    params.push(district_id);
-    counter++;
-  }
-
-  // Remove the last "AND "
-  query = query.slice(0, -4);
+    FROM countries AS c
+    JOIN provinces AS p ON c.id = p.country_id
+    JOIN cities AS ci ON p.id = ci.province_id
+    JOIN districts AS d ON ci.id = d.city_id
+    JOIN villages AS v ON d.id = v.district_id
+    WHERE 
+      (c.id = $1 OR $1 IS NULL) AND 
+      (p.id = $2 OR $2 IS NULL) AND 
+      (ci.id = $3 OR $3 IS NULL) AND 
+      (d.id = $4 OR $4 IS NULL);
+  `;
+  const params = [country_id, province_id, city_id, district_id];
 
   try {
     const res = await client.query(query, params);
