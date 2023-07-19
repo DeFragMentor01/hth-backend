@@ -107,11 +107,11 @@ fastify.get('/villages/:district_id', async (request, reply) => {
   }
 });
 
-  fastify.get('/communities', async (request, reply) => {
+  fastify.get('/villages', async (request, reply) => {
   const { country_id, province_id, city_id, district_id, village_id } = request.query;
   const client = await pool.connect();
 
-  let query = 'SELECT * FROM communities WHERE ';
+  let query = 'SELECT * FROM villages WHERE ';
   let params = [];
   let counter = 1;
 
