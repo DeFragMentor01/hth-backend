@@ -31,7 +31,7 @@ async function routes(fastify, options) {
   // });
   
 fastify.get('/countries', async (request, reply) => {
-  const client = await fastify.db.connect()
+  const client = await pool.connect();
   
   try {
     const res = await client.query('SELECT * FROM countries')
@@ -46,7 +46,7 @@ fastify.get('/countries', async (request, reply) => {
 
 fastify.get('/provinces/:country_id', async (request, reply) => {
   const { country_id } = request.params
-  const client = await fastify.db.connect()
+  const client = await pool.connect();
 
   try {
     const res = await client.query('SELECT * FROM provinces WHERE country_id = $1', [country_id])
@@ -62,7 +62,7 @@ fastify.get('/provinces/:country_id', async (request, reply) => {
 // Get list of cities for a specific province
 fastify.get('/cities/:province_id', async (request, reply) => {
   const { province_id } = request.params
-  const client = await fastify.db.connect()
+  const client = await pool.connect();
 
   try {
     const res = await client.query('SELECT * FROM cities WHERE province_id = $1', [province_id])
@@ -78,7 +78,7 @@ fastify.get('/cities/:province_id', async (request, reply) => {
 // Get list of districts for a specific city
 fastify.get('/districts/:city_id', async (request, reply) => {
   const { city_id } = request.params
-  const client = await fastify.db.connect()
+  const client = await pool.connect();
 
   try {
     const res = await client.query('SELECT * FROM districts WHERE city_id = $1', [city_id])
@@ -94,7 +94,7 @@ fastify.get('/districts/:city_id', async (request, reply) => {
 // Get list of villages for a specific district
 fastify.get('/villages/:district_id', async (request, reply) => {
   const { district_id } = request.params
-  const client = await fastify.db.connect()
+  const client = await pool.connect();
 
   try {
     const res = await client.query('SELECT * FROM villages WHERE district_id = $1', [district_id])
