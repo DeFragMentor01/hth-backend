@@ -108,40 +108,41 @@ fastify.get('/villages/:district_id', async (request, reply) => {
 });
 
   fastify.get('/villages', async (request, reply) => {
-  const { country_id, province_id, city_id, district_id, village_id } = request.query;
+  const { country_id, province_id, city_id, district_id } = request.query;
   const client = await pool.connect();
 
-  let query = 'SELECT * FROM villages WHERE ';
+  let query = `
+    SELECT v.* 
+    FROM villages AS v
+    JOIN districts AS d ON v.district_id = d.id
+    JOIN cities AS c ON d.city_id = c.id
+    JOIN provinces AS p ON c.province_id = p.id
+    JOIN countries AS co ON p.country_id = co.id
+    WHERE `;
   let params = [];
   let counter = 1;
 
   if (country_id) {
-    query += `country_id = $${counter} AND `;
+    query += `co.id = $${counter} AND `;
     params.push(country_id);
     counter++;
   }
 
   if (province_id) {
-    query += `province_id = $${counter} AND `;
+    query += `p.id = $${counter} AND `;
     params.push(province_id);
     counter++;
   }
 
   if (city_id) {
-    query += `city_id = $${counter} AND `;
+    query += `c.id = $${counter} AND `;
     params.push(city_id);
     counter++;
   }
 
   if (district_id) {
-    query += `district_id = $${counter} AND `;
+    query += `d.id = $${counter} AND `;
     params.push(district_id);
-    counter++;
-  }
-
-  if (village_id) {
-    query += `village_id = $${counter} AND `;
-    params.push(village_id);
     counter++;
   }
 
