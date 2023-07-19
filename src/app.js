@@ -15,53 +15,61 @@ async function routes(fastify, options) {
   fastify.get("/", async (request, reply) => {
     return { hello: "world" };
   });
-  fastify.get("/villages-info", async (request, reply) => {
-    try {
-      const client = await pool.connect();
-      const result = await client.query("SELECT * FROM villages");
-      const villages = result.rows;
+  // fastify.get("/villages-info", async (request, reply) => {
+  //   try {
+  //     const client = await pool.connect();
+  //     const result = await client.query("SELECT * FROM villages");
+  //     const villages = result.rows;
 
-      client.release();
+  //     client.release();
 
-      reply.code(200).send(villages);
-    } catch (error) {
-      console.error("Error fetching village data:", error);
-      reply.code(500).send({ error: "Internal Server Error" });
-    }
-  });
+  //     reply.code(200).send(villages);
+  //   } catch (error) {
+  //     console.error("Error fetching village data:", error);
+  //     reply.code(500).send({ error: "Internal Server Error" });
+  //   }
+  // });
   
-  // Get list of all countries
 fastify.get('/countries', async (request, reply) => {
   const client = await fastify.db.connect()
-
+  
   try {
     const res = await client.query('SELECT * FROM countries')
-    return res.rows
+    reply.send(res.rows)
+  } catch (err) {
+    console.error('Error occurred:', err)
+    reply.status(500).send({ message: 'An error occurred', error: err.message })
   } finally {
     client.release()
   }
 });
 
-// Get list of provinces for a specific country
 fastify.get('/provinces/:country_id', async (request, reply) => {
   const { country_id } = request.params
   const client = await fastify.db.connect()
 
   try {
     const res = await client.query('SELECT * FROM provinces WHERE country_id = $1', [country_id])
-    return res.rows
+    reply.send(res.rows)
+  } catch (err) {
+    console.error('Error occurred:', err)
+    reply.status(500).send({ message: 'An error occurred', error: err.message })
   } finally {
     client.release()
   }
 });
-  // Get list of cities for a specific province
+
+// Get list of cities for a specific province
 fastify.get('/cities/:province_id', async (request, reply) => {
   const { province_id } = request.params
   const client = await fastify.db.connect()
 
   try {
     const res = await client.query('SELECT * FROM cities WHERE province_id = $1', [province_id])
-    return res.rows
+    reply.send(res.rows)
+  } catch (err) {
+    console.error('Error occurred:', err)
+    reply.status(500).send({ message: 'An error occurred', error: err.message })
   } finally {
     client.release()
   }
@@ -74,7 +82,10 @@ fastify.get('/districts/:city_id', async (request, reply) => {
 
   try {
     const res = await client.query('SELECT * FROM districts WHERE city_id = $1', [city_id])
-    return res.rows
+    reply.send(res.rows)
+  } catch (err) {
+    console.error('Error occurred:', err)
+    reply.status(500).send({ message: 'An error occurred', error: err.message })
   } finally {
     client.release()
   }
@@ -87,7 +98,10 @@ fastify.get('/villages/:district_id', async (request, reply) => {
 
   try {
     const res = await client.query('SELECT * FROM villages WHERE district_id = $1', [district_id])
-    return res.rows
+    reply.send(res.rows)
+  } catch (err) {
+    console.error('Error occurred:', err)
+    reply.status(500).send({ message: 'An error occurred', error: err.message })
   } finally {
     client.release()
   }
