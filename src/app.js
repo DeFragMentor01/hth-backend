@@ -45,54 +45,20 @@ fastify.get('/provinces/:country_id', async (request, reply) => {
   }
 });
 
-// Get list of districts for a specific city
-fastify.get('/districts/:province_id', async (request, reply) => {
-  const { province_id } = request.params
-  const client = await pool.connect();
-
-  try {
-    const res = await client.query('SELECT * FROM districts WHERE province_id = $1', [province_id])
-    reply.send(res.rows)
-  } catch (err) {
-    console.error('Error occurred:', err)
-    reply.status(500).send({ message: 'An error occurred', error: err.message })
-  } finally {
-    client.release()
-  }
-});
-
-// Get list of villages for a specific district
-fastify.get('/villages/:district_id', async (request, reply) => {
-  const { district_id } = request.params
-  const client = await pool.connect();
-
-  try {
-    const res = await client.query('SELECT * FROM villages WHERE district_id = $1', [district_id])
-    reply.send(res.rows)
-  } catch (err) {
-    console.error('Error occurred:', err)
-    reply.status(500).send({ message: 'An error occurred', error: err.message })
-  } finally {
-    client.release()
-  }
-});
-
 fastify.get('/villages', async (request, reply) => {
-  const { country_id, province_id, district_id } = request.query;
+  const { country_id, province_id } = request.query;
   const client = await pool.connect();
 
   const query = `
     SELECT v.* 
-    FROM countries AS c
-    JOIN provinces AS p ON c.id = p.country_id
+    FROM provinces AS p
     JOIN districts AS d ON p.id = d.province_id
     JOIN villages AS v ON d.id = v.district_id
     WHERE 
-      (c.id = $1 OR $1 IS NULL) AND 
-      (p.id = $2 OR $2 IS NULL) AND 
-      (d.id = $3 OR $3 IS NULL);
+      (p.country_id = $1 OR $1 IS NULL) AND 
+      (p.id = $2 OR $2 IS NULL);
   `;
-  const params = [country_id, province_id, district_id];
+  const params = [country_id, province_id];
 
   try {
     const res = await client.query(query, params);
