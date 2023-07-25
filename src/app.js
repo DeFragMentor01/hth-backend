@@ -15,20 +15,6 @@ async function routes(fastify, options) {
   fastify.get("/", async (request, reply) => {
     return { hello: "world" };
   });
-  // fastify.get("/villages-info", async (request, reply) => {
-  //   try {
-  //     const client = await pool.connect();
-  //     const result = await client.query("SELECT * FROM villages");
-  //     const villages = result.rows;
-
-  //     client.release();
-
-  //     reply.code(200).send(villages);
-  //   } catch (error) {
-  //     console.error("Error fetching village data:", error);
-  //     reply.code(500).send({ error: "Internal Server Error" });
-  //   }
-  // });
   
 fastify.get('/countries', async (request, reply) => {
   const client = await pool.connect();
@@ -59,29 +45,13 @@ fastify.get('/provinces/:country_id', async (request, reply) => {
   }
 });
 
-// Get list of cities for a specific province
-fastify.get('/cities/:province_id', async (request, reply) => {
+// Get list of districts for a specific city
+fastify.get('/districts/:province_id', async (request, reply) => {
   const { province_id } = request.params
   const client = await pool.connect();
 
   try {
-    const res = await client.query('SELECT * FROM cities WHERE province_id = $1', [province_id])
-    reply.send(res.rows)
-  } catch (err) {
-    console.error('Error occurred:', err)
-    reply.status(500).send({ message: 'An error occurred', error: err.message })
-  } finally {
-    client.release()
-  }
-});
-
-// Get list of districts for a specific city
-fastify.get('/districts/:city_id', async (request, reply) => {
-  const { city_id } = request.params
-  const client = await pool.connect();
-
-  try {
-    const res = await client.query('SELECT * FROM districts WHERE city_id = $1', [city_id])
+    const res = await client.query('SELECT * FROM districts WHERE province_id = $1', [province_id])
     reply.send(res.rows)
   } catch (err) {
     console.error('Error occurred:', err)
@@ -107,24 +77,22 @@ fastify.get('/villages/:district_id', async (request, reply) => {
   }
 });
 
- fastify.get('/villages', async (request, reply) => {
-  const { country_id, province_id, city_id, district_id } = request.query;
+fastify.get('/villages', async (request, reply) => {
+  const { country_id, province_id, district_id } = request.query;
   const client = await pool.connect();
 
   const query = `
     SELECT v.* 
     FROM countries AS c
     JOIN provinces AS p ON c.id = p.country_id
-    JOIN cities AS ci ON p.id = ci.province_id
-    JOIN districts AS d ON ci.id = d.city_id
+    JOIN districts AS d ON p.id = d.province_id
     JOIN villages AS v ON d.id = v.district_id
     WHERE 
       (c.id = $1 OR $1 IS NULL) AND 
       (p.id = $2 OR $2 IS NULL) AND 
-      (ci.id = $3 OR $3 IS NULL) AND 
-      (d.id = $4 OR $4 IS NULL);
+      (d.id = $3 OR $3 IS NULL);
   `;
-  const params = [country_id, province_id, city_id, district_id];
+  const params = [country_id, province_id, district_id];
 
   try {
     const res = await client.query(query, params);
