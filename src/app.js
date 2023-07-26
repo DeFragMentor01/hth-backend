@@ -55,8 +55,8 @@ fastify.get('/villages', async (request, reply) => {
     JOIN districts AS d ON p.id = d.province_id
     JOIN villages AS v ON d.id = v.district_id
     WHERE 
-      (p.country_id = $1 OR $1 IS NULL) AND 
-      (p.id = $2 OR $2 IS NULL);
+      p.country_id = $1 AND 
+      p.id = $2;
   `;
   const params = [country_id, province_id];
 
