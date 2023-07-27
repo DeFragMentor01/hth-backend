@@ -266,6 +266,8 @@ fastify.get("/users", async (request, reply) => {
 
     const allowedFields = [
       'username',
+      'firstname',
+      'lastname',
       'dateofbirth',
       'gender',
       'community',
