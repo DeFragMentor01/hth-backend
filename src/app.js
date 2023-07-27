@@ -262,19 +262,17 @@ fastify.get("/users/filters", async (request, reply) => {
 fastify.get("/users", async (request, reply) => {
   try {
     const { page = 1, size = 100, country, state, city, village } = request.query;
-    const client = await pool.connect();
     const offset = (page - 1) * size;
 
     const allowedFields = [
       'username',
       'dateofbirth',
       'gender',
-      'tribe',
       'community',
       'city',
       'state',
       'country',
-      'age'
+      'village'
     ];
 
     let query = `SELECT ${allowedFields.join(', ')} FROM users WHERE 1=1`;
@@ -299,6 +297,7 @@ fastify.get("/users", async (request, reply) => {
 
     query += ' ORDER BY id LIMIT $1 OFFSET $2';
 
+    const client = await pool.connect();
     const result = await client.query(query, params);
 
     const users = result.rows;
@@ -315,7 +314,7 @@ fastify.get("/users", async (request, reply) => {
     reply.code(500).send({ error: process.env.NODE_ENV === 'development' ? error : "Internal Server Error" });
   }
 });
-  
+
   fastify.post("/register", async (request, reply) => {
     try {
       const {
