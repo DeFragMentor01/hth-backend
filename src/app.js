@@ -386,7 +386,7 @@ fastify.get("/users", async (request, reply) => {
   });
   
   // Get all countries
-  fastify.get("/countries", async (request, reply) => {
+  fastify.get("/user-countries", async (request, reply) => {
     const query = "SELECT DISTINCT country FROM users ORDER BY country";
     const { rows } = await fastify.pg.query(query);
 
@@ -396,7 +396,7 @@ fastify.get("/users", async (request, reply) => {
   });
 
     // Get states by country
-    fastify.get('/states', async (request, reply) => {
+    fastify.get('/user-states', async (request, reply) => {
       const { country } = request.query;
     
       const query = 'SELECT DISTINCT state FROM users WHERE country = $1 AND state IS NOT NULL ORDER BY state';
@@ -413,7 +413,7 @@ fastify.get("/users", async (request, reply) => {
     });        
 
   // Get cities by state
-fastify.get("/cities", async (request, reply) => {
+fastify.get("/user-cities", async (request, reply) => {
   const { state } = request.query;
 
   const query = "SELECT DISTINCT city FROM users WHERE state = $1 AND city IS NOT NULL ORDER BY city";
@@ -429,7 +429,7 @@ fastify.get("/cities", async (request, reply) => {
 });
 
 // Get communities by state
-fastify.get("/communities", async (request, reply) => {
+fastify.get("/user-communities", async (request, reply) => {
   const { state } = request.query;
 
   const query = "SELECT DISTINCT community FROM users WHERE state = $1 AND community IS NOT NULL ORDER BY community";
@@ -445,7 +445,7 @@ fastify.get("/communities", async (request, reply) => {
 });
 
 // Get villages by community
-fastify.get("/villages", async (request, reply) => {
+fastify.get("/user-villages", async (request, reply) => {
   const { community } = request.query;
 
   const query = "SELECT DISTINCT village FROM users WHERE community = $1 AND village IS NOT NULL ORDER BY village";
