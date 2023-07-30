@@ -384,6 +384,19 @@ fastify.get("/users", async (request, reply) => {
         .send({ message: "An error occurred", error: err.message });
     }
   });
+  
+   fastify.get("/states", async (request, reply) => {
+    const { country } = request.query;
+
+    const query =
+      "SELECT DISTINCT state FROM users WHERE country = $1 ORDER BY state";
+    const { rows } = await fastify.pg.query(query, [country]);
+
+    const states = rows.map((row) => row.state);
+
+    reply.send(states);
+  });
+  
 }
 
 // fastify.register(routes);
