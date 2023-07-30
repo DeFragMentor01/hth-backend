@@ -385,22 +385,80 @@ fastify.get("/users", async (request, reply) => {
     }
   });
   
-  // Get states by country
-fastify.get('/states', async (request, reply) => {
-  const { country } = request.query;
+  // Get all countries
+  fastify.get("/countries", async (request, reply) => {
+    const query = "SELECT DISTINCT country FROM users ORDER BY country";
+    const { rows } = await fastify.pg.query(query);
 
-  const query = 'SELECT DISTINCT state FROM users WHERE country = $1 AND state IS NOT NULL ORDER BY state';
+    const countries = rows.map((row) => row.country);
+
+    reply.send(countries);
+  });
+
+    // Get states by country
+    fastify.get('/states', async (request, reply) => {
+      const { country } = request.query;
+    
+      const query = 'SELECT DISTINCT state FROM users WHERE country = $1 AND state IS NOT NULL ORDER BY state';
+    
+      const client = await pool.connect();
+      // Pass the `country` value in as a parameter to the query
+      const result = await client.query(query, [country]);
+      client.release();
+    
+      const { rows } = result;
+      const states = rows.map(row => row.state);
+    
+      reply.send(states);
+    });        
+
+  // Get cities by state
+fastify.get("/cities", async (request, reply) => {
+  const { state } = request.query;
+
+  const query = "SELECT DISTINCT city FROM users WHERE state = $1 AND city IS NOT NULL ORDER BY city";
 
   const client = await pool.connect();
-  // Pass the `country` value in as a parameter to the query
-  const result = await client.query(query, [country]);
+  const result = await client.query(query, [state]);
   client.release();
 
   const { rows } = result;
-  const states = rows.map(row => row.state);
+  const cities = rows.map((row) => row.city);
 
-  reply.send(states);
-}); 
+  reply.send(cities);
+});
+
+// Get communities by state
+fastify.get("/communities", async (request, reply) => {
+  const { state } = request.query;
+
+  const query = "SELECT DISTINCT community FROM users WHERE state = $1 AND community IS NOT NULL ORDER BY community";
+
+  const client = await pool.connect();
+  const result = await client.query(query, [state]);
+  client.release();
+
+  const { rows } = result;
+  const communities = rows.map((row) => row.community);
+
+  reply.send(communities);
+});
+
+// Get villages by community
+fastify.get("/villages", async (request, reply) => {
+  const { community } = request.query;
+
+  const query = "SELECT DISTINCT village FROM users WHERE community = $1 AND village IS NOT NULL ORDER BY village";
+
+  const client = await pool.connect();
+  const result = await client.query(query, [community]);
+  client.release();
+
+  const { rows } = result;
+  const villages = rows.map((row) => row.village);
+
+  reply.send(villages);
+});
 
 }
 
