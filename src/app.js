@@ -389,13 +389,13 @@ fastify.get("/users", async (request, reply) => {
 fastify.get('/states', async (request, reply) => {
   const { country } = request.query;
 
+  const query = 'SELECT DISTINCT state FROM users WHERE country = $1 AND state IS NOT NULL ORDER BY state';
+
   const client = await pool.connect();
   const result = await client.query(query);
   client.release();
 
-  const query = 'SELECT DISTINCT state FROM users WHERE country = $1 AND state IS NOT NULL ORDER BY state';
-  const { rows } = await fastify.pg.query(query, [country]);
-
+  const { rows } = result;
   const states = rows.map(row => row.state);
 
   reply.send(states);
