@@ -385,17 +385,17 @@ fastify.get("/users", async (request, reply) => {
     }
   });
   
-   fastify.get("/states", async (request, reply) => {
-    const { country } = request.query;
+  // Get states by country
+fastify.get('/states', async (request, reply) => {
+  const { country } = request.query;
 
-    const query =
-      "SELECT DISTINCT state FROM users WHERE country = $1 ORDER BY state";
-    const { rows } = await fastify.pg.query(query, [country]);
+  const query = 'SELECT DISTINCT state FROM users WHERE country = $1 AND state IS NOT NULL ORDER BY state';
+  const { rows } = await fastify.pg.query(query, [country]);
 
-    const states = rows.map((row) => row.state);
+  const states = rows.map(row => row.state);
 
-    reply.send(states);
-  });
+  reply.send(states);
+});
   
 }
 
