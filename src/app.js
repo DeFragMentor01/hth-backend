@@ -392,15 +392,16 @@ fastify.get('/states', async (request, reply) => {
   const query = 'SELECT DISTINCT state FROM users WHERE country = $1 AND state IS NOT NULL ORDER BY state';
 
   const client = await pool.connect();
-  const result = await client.query(query);
+  // Pass the `country` value in as a parameter to the query
+  const result = await client.query(query, [country]);
   client.release();
 
   const { rows } = result;
   const states = rows.map(row => row.state);
 
   reply.send(states);
-});
-  
+}); 
+
 }
 
 // fastify.register(routes);
