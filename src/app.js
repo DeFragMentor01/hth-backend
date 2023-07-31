@@ -280,31 +280,37 @@ fastify.get("/users", async (request, reply) => {
     let query = `SELECT ${allowedFields.join(', ')} FROM users WHERE 1=1`;
     let countQuery = `SELECT COUNT(*) FROM users WHERE 1=1`;
     let params = [size, offset];
+    let countParams = [];
 
     if (country) {
       params.push(country);
+      countParams.push(country);
       query += ` AND country = $${params.length}`;
-      countQuery += ` AND country = $${params.length}`;
+      countQuery += ` AND country = $${countParams.length}`;
     }
     if (state) {
       params.push(state);
+      countParams.push(state);
       query += ` AND state = $${params.length}`;
-      countQuery += ` AND state = $${params.length}`;
+      countQuery += ` AND state = $${countParams.length}`;
     }
     if (city) {
       params.push(city);
+      countParams.push(city);
       query += ` AND city = $${params.length}`;
-      countQuery += ` AND city = $${params.length}`;
+      countQuery += ` AND city = $${countParams.length}`;
     }
     if (village) {
       params.push(village);
+      countParams.push(village);
       query += ` AND village = $${params.length}`;
-      countQuery += ` AND village = $${params.length}`;
+      countQuery += ` AND village = $${countParams.length}`;
     }
     if (community) {
       params.push(community);
+      countParams.push(community);
       query += ` AND community = $${params.length}`;
-      countQuery += ` AND community = $${params.length}`;
+      countQuery += ` AND community = $${countParams.length}`;
     }
 
     query += ' ORDER BY id LIMIT $1 OFFSET $2';
@@ -315,7 +321,7 @@ fastify.get("/users", async (request, reply) => {
     const users = result.rows;
 
     // Query for total number of users matching the filter
-    const filterTotalResult = await client.query(countQuery, params.slice(1));
+    const filterTotalResult = await client.query(countQuery, countParams);
     const filterTotalUsers = filterTotalResult.rows[0].count;
 
     // Query for total number of users
@@ -330,7 +336,6 @@ fastify.get("/users", async (request, reply) => {
     reply.code(500).send({ error: process.env.NODE_ENV === 'development' ? error : "Internal Server Error" });
   }
 });
-
 
   fastify.post("/register", async (request, reply) => {
     try {
