@@ -331,6 +331,7 @@ fastify.get("/users", async (request, reply) => {
   }
 });
 
+
   fastify.post("/register", async (request, reply) => {
     try {
       const {
@@ -399,20 +400,15 @@ fastify.get("/users", async (request, reply) => {
     }
   });
   
-// Get all countries
-fastify.get("/user-countries", async (request, reply) => {
-  const query = "SELECT DISTINCT country FROM users ORDER BY country";
+  // Get all countries
+  fastify.get("/user-countries", async (request, reply) => {
+    const query = "SELECT DISTINCT country FROM users ORDER BY country";
+    const { rows } = await fastify.pg.query(query);
 
-  const client = await pool.connect();
-  const result = await client.query(query);
-  client.release();
+    const countries = rows.map((row) => row.country);
 
-  const { rows } = result;
-  const countries = rows.map((row) => row.country);
-
-  reply.send(countries);
-});
-
+    reply.send(countries);
+  });
 
     // Get states by country
     fastify.get('/user-states', async (request, reply) => {
