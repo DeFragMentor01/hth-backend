@@ -261,7 +261,7 @@ fastify.get("/users/filters", async (request, reply) => {
 
 fastify.get("/users", async (request, reply) => {
   try {
-    const { page = 1, size = 100, country, state, city, village } = request.query;
+    const { page = 1, size = 100, country, state, city, village, community } = request.query;
     const offset = (page - 1) * size;
 
     const allowedFields = [
@@ -278,23 +278,33 @@ fastify.get("/users", async (request, reply) => {
     ];
 
     let query = `SELECT ${allowedFields.join(', ')} FROM users WHERE 1=1`;
+    let countQuery = `SELECT COUNT(*) FROM users WHERE 1=1`;
     let params = [size, offset];
 
     if (country) {
       params.push(country);
       query += ` AND country = $${params.length}`;
+      countQuery += ` AND country = $${params.length}`;
     }
     if (state) {
       params.push(state);
       query += ` AND state = $${params.length}`;
+      countQuery += ` AND state = $${params.length}`;
     }
     if (city) {
       params.push(city);
       query += ` AND city = $${params.length}`;
+      countQuery += ` AND city = $${params.length}`;
     }
     if (village) {
       params.push(village);
       query += ` AND village = $${params.length}`;
+      countQuery += ` AND village = $${params.length}`;
+    }
+    if (community) {
+      params.push(community);
+      query += ` AND community = $${params.length}`;
+      countQuery += ` AND community = $${params.length}`;
     }
 
     query += ' ORDER BY id LIMIT $1 OFFSET $2';
@@ -304,13 +314,17 @@ fastify.get("/users", async (request, reply) => {
 
     const users = result.rows;
 
+    // Query for total number of users matching the filter
+    const filterTotalResult = await client.query(countQuery, params.slice(1));
+    const filterTotalUsers = filterTotalResult.rows[0].count;
+
     // Query for total number of users
     const totalResult = await client.query("SELECT COUNT(*) FROM users");
     const totalUsers = totalResult.rows[0].count;
 
     client.release();
 
-    reply.code(200).send({ users, total: totalUsers });
+    reply.code(200).send({ users, total: totalUsers, filterTotal: filterTotalUsers });
   } catch (error) {
     console.error("Error fetching user data:", error);
     reply.code(500).send({ error: process.env.NODE_ENV === 'development' ? error : "Internal Server Error" });
