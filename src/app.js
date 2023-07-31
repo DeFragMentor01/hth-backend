@@ -315,7 +315,9 @@ async function routes(fastify, options) {
         city,
         village,
         community,
-        gender
+        gender,
+        age,
+        ageRange
       } = request.query;
       const offset = (page - 1) * size;
   
@@ -323,7 +325,7 @@ async function routes(fastify, options) {
         "username",
         "firstname",
         "lastname",
-        "dateofbirth",
+        "EXTRACT(YEAR FROM AGE(dateofbirth)) AS age",
         "gender",
         "community",
         "city",
@@ -372,6 +374,19 @@ async function routes(fastify, options) {
         countParams.push(gender);
         query += ` AND gender = $${params.length}`;
         countQuery += ` AND gender = $${countParams.length}`;
+      }
+      if (age) {
+        params.push(age);
+        countParams.push(age);
+        query += ` AND EXTRACT(YEAR FROM AGE(dateofbirth)) = $${params.length}`;
+        countQuery += ` AND EXTRACT(YEAR FROM AGE(dateofbirth)) = $${countParams.length}`;
+      }
+      if (ageRange) {
+        const [minAge, maxAge] = ageRange.split('-');
+        params.push(minAge, maxAge);
+        countParams.push(minAge, maxAge);
+        query += ` AND EXTRACT(YEAR FROM AGE(dateofbirth)) BETWEEN $${params.length - 1} AND $${params.length}`;
+        countQuery += ` AND EXTRACT(YEAR FROM AGE(dateofbirth)) BETWEEN $${countParams.length - 1} AND $${countParams.length}`;
       }
   
       query += " ORDER BY id LIMIT $1 OFFSET $2";
