@@ -9,79 +9,96 @@ const host = "0.0.0.0";
 
 async function routes(fastify, options) {
   fastify.register(formBody);
- fastify.register(cors, {
+  fastify.register(cors, {
     origin: "*",
   });
   fastify.get("/", async (request, reply) => {
     return { hello: "world" };
   });
-  
-fastify.get('/countries', async (request, reply) => {
-  const client = await pool.connect();
-  
-  try {
-    const res = await client.query('SELECT * FROM countries')
-    reply.send(res.rows)
-  } catch (err) {
-    console.error('Error occurred:', err)
-    reply.status(500).send({ message: 'An error occurred', error: err.message })
-  } finally {
-    client.release()
-  }
-});
 
-fastify.get('/provinces/:country_id', async (request, reply) => {
-  const { country_id } = request.params
-  const client = await pool.connect();
+  fastify.get("/countries", async (request, reply) => {
+    const client = await pool.connect();
 
-  try {
-    const res = await client.query('SELECT * FROM provinces WHERE country_id = $1', [country_id])
-    reply.send(res.rows)
-  } catch (err) {
-    console.error('Error occurred:', err)
-    reply.status(500).send({ message: 'An error occurred', error: err.message })
-  } finally {
-    client.release()
-  }
-});
+    try {
+      const res = await client.query("SELECT * FROM countries");
+      reply.send(res.rows);
+    } catch (err) {
+      console.error("Error occurred:", err);
+      reply
+        .status(500)
+        .send({ message: "An error occurred", error: err.message });
+    } finally {
+      client.release();
+    }
+  });
 
-// Get list of districts for a specific city
-fastify.get('/districts/:province_id', async (request, reply) => {
-  const { province_id } = request.params
-  const client = await pool.connect();
+  fastify.get("/provinces/:country_id", async (request, reply) => {
+    const { country_id } = request.params;
+    const client = await pool.connect();
 
-  try {
-    const res = await client.query('SELECT * FROM districts WHERE province_id = $1', [province_id])
-    reply.send(res.rows)
-  } catch (err) {
-    console.error('Error occurred:', err)
-    reply.status(500).send({ message: 'An error occurred', error: err.message })
-  } finally {
-    client.release()
-  }
-});
+    try {
+      const res = await client.query(
+        "SELECT * FROM provinces WHERE country_id = $1",
+        [country_id]
+      );
+      reply.send(res.rows);
+    } catch (err) {
+      console.error("Error occurred:", err);
+      reply
+        .status(500)
+        .send({ message: "An error occurred", error: err.message });
+    } finally {
+      client.release();
+    }
+  });
 
-// Get list of villages for a specific district
-fastify.get('/villages/:district_id', async (request, reply) => {
-  const { district_id } = request.params
-  const client = await pool.connect();
+  // Get list of districts for a specific city
+  fastify.get("/districts/:province_id", async (request, reply) => {
+    const { province_id } = request.params;
+    const client = await pool.connect();
 
-  try {
-    const res = await client.query('SELECT * FROM villages WHERE district_id = $1', [district_id])
-    reply.send(res.rows)
-  } catch (err) {
-    console.error('Error occurred:', err)
-    reply.status(500).send({ message: 'An error occurred', error: err.message })
-  } finally {
-    client.release()
-  }
-});
+    try {
+      const res = await client.query(
+        "SELECT * FROM districts WHERE province_id = $1",
+        [province_id]
+      );
+      reply.send(res.rows);
+    } catch (err) {
+      console.error("Error occurred:", err);
+      reply
+        .status(500)
+        .send({ message: "An error occurred", error: err.message });
+    } finally {
+      client.release();
+    }
+  });
 
-fastify.get('/villages', async (request, reply) => {
-  const { country_id, province_id, district_id } = request.query;
-  const client = await pool.connect();
+  // Get list of villages for a specific district
+  fastify.get("/villages/:district_id", async (request, reply) => {
+    const { district_id } = request.params;
+    const client = await pool.connect();
 
-  const query = `
+    try {
+      const res = await client.query(
+        "SELECT * FROM villages WHERE district_id = $1",
+        [district_id]
+      );
+      reply.send(res.rows);
+    } catch (err) {
+      console.error("Error occurred:", err);
+      reply
+        .status(500)
+        .send({ message: "An error occurred", error: err.message });
+    } finally {
+      client.release();
+    }
+  });
+
+  fastify.get("/villages", async (request, reply) => {
+    const { country_id, province_id, district_id } = request.query;
+    const client = await pool.connect();
+
+    const query = `
     SELECT v.* 
     FROM countries AS c
     JOIN provinces AS p ON c.id = p.country_id
@@ -92,88 +109,111 @@ fastify.get('/villages', async (request, reply) => {
       (p.id = $2 OR $2 IS NULL) AND 
       (d.id = $3 OR $3 IS NULL);
   `;
-  const params = [country_id, province_id, district_id];
+    const params = [country_id, province_id, district_id];
 
-  try {
-    const res = await client.query(query, params);
-    reply.send(res.rows);
-  } catch (err) {
-    console.error('Error occurred:', err);
-    reply.status(500).send({ message: 'An error occurred', error: err.message });
-  } finally {
-    client.release();
-  }
-});
+    try {
+      const res = await client.query(query, params);
+      reply.send(res.rows);
+    } catch (err) {
+      console.error("Error occurred:", err);
+      reply
+        .status(500)
+        .send({ message: "An error occurred", error: err.message });
+    } finally {
+      client.release();
+    }
+  });
 
   // Get the count of villages in a specific country
-fastify.get('/villages/count/country/:country_id', async (request, reply) => {
-  const { country_id } = request.params
-  const client = await pool.connect();
+  fastify.get("/villages/count/country/:country_id", async (request, reply) => {
+    const { country_id } = request.params;
+    const client = await pool.connect();
 
-  try {
-    const res = await client.query(`
+    try {
+      const res = await client.query(
+        `
       SELECT COUNT(*) AS count 
       FROM countries AS c 
       JOIN provinces AS p ON c.id = p.country_id
       JOIN districts AS d ON p.id = d.province_id
       JOIN villages AS v ON d.id = v.district_id
       WHERE c.id = $1
-    `, [country_id])
+    `,
+        [country_id]
+      );
 
-    reply.send(res.rows[0])
-  } catch (err) {
-    console.error('Error occurred:', err)
-    reply.status(500).send({ message: 'An error occurred', error: err.message })
-  } finally {
-    client.release()
-  }
-});
+      reply.send(res.rows[0]);
+    } catch (err) {
+      console.error("Error occurred:", err);
+      reply
+        .status(500)
+        .send({ message: "An error occurred", error: err.message });
+    } finally {
+      client.release();
+    }
+  });
 
-// Get the count of villages in a specific province
-fastify.get('/villages/count/province/:province_id', async (request, reply) => {
-  const { province_id } = request.params
-  const client = await pool.connect();
+  // Get the count of villages in a specific province
+  fastify.get(
+    "/villages/count/province/:province_id",
+    async (request, reply) => {
+      const { province_id } = request.params;
+      const client = await pool.connect();
 
-  try {
-    const res = await client.query(`
+      try {
+        const res = await client.query(
+          `
       SELECT COUNT(*) AS count 
       FROM provinces AS p
       JOIN districts AS d ON p.id = d.province_id
       JOIN villages AS v ON d.id = v.district_id
       WHERE p.id = $1
-    `, [province_id])
+    `,
+          [province_id]
+        );
 
-    reply.send(res.rows[0])
-  } catch (err) {
-    console.error('Error occurred:', err)
-    reply.status(500).send({ message: 'An error occurred', error: err.message })
-  } finally {
-    client.release()
-  }
-});
+        reply.send(res.rows[0]);
+      } catch (err) {
+        console.error("Error occurred:", err);
+        reply
+          .status(500)
+          .send({ message: "An error occurred", error: err.message });
+      } finally {
+        client.release();
+      }
+    }
+  );
 
-// Get the count of villages in a specific district
-fastify.get('/villages/count/district/:district_id', async (request, reply) => {
-  const { district_id } = request.params
-  const client = await pool.connect();
+  // Get the count of villages in a specific district
+  fastify.get(
+    "/villages/count/district/:district_id",
+    async (request, reply) => {
+      const { district_id } = request.params;
+      const client = await pool.connect();
 
-  try {
-    const res = await client.query(`
+      try {
+        const res = await client.query(
+          `
       SELECT COUNT(*) AS count 
       FROM districts AS d
       JOIN villages AS v ON d.id = v.district_id
       WHERE d.id = $1
-    `, [district_id])
+    `,
+          [district_id]
+        );
 
-    reply.send(res.rows[0])
-  } catch (err) {
-    console.error('Error occurred:', err)
-    reply.status(500).send({ message: 'An error occurred', error: err.message })
-  } finally {
-    client.release()
-  }
-});
-  
+        reply.send(res.rows[0]);
+      } catch (err) {
+        console.error("Error occurred:", err);
+        reply
+          .status(500)
+          .send({ message: "An error occurred", error: err.message });
+      } finally {
+        client.release();
+      }
+    }
+  );
+
   fastify.post("/login", async (request, reply) => {
     try {
       const { email, password } = request.body;
@@ -215,127 +255,150 @@ fastify.get('/villages/count/district/:district_id', async (request, reply) => {
     }
   });
 
-fastify.get("/users/filters", async (request, reply) => {
-  try {
-    const { country, state, city } = request.query;
-    const client = await pool.connect();
-    let query = 'SELECT DISTINCT ';
-    let params = [];
+  fastify.get("/users/filters", async (request, reply) => {
+    try {
+      const { country, state, city } = request.query;
+      const client = await pool.connect();
+      let query = "SELECT DISTINCT ";
+      let params = [];
 
-    const allowedFields = [
-      'username',
-      'dateofbirth',
-      'gender',
-      'tribe',
-      'community',
-      'city',
-      'state',
-      'country',
-      'age'
-    ];
+      const allowedFields = [
+        "username",
+        "dateofbirth",
+        "gender",
+        "tribe",
+        "community",
+        "city",
+        "state",
+        "country",
+        "age",
+      ];
 
-    query += allowedFields.join(', ');
+      query += allowedFields.join(", ");
 
-    if (!country) {
-      query += ' FROM users';
-    } else if (!state) {
-      query += ' FROM users WHERE country = $1';
-      params.push(country);
-    } else if (!city) {
-      query += ' FROM users WHERE country = $1 AND state = $2';
-      params.push(country, state);
-    } else {
-      query += ' FROM users WHERE country = $1 AND state = $2 AND city = $3';
-      params.push(country, state, city);
+      if (!country) {
+        query += " FROM users";
+      } else if (!state) {
+        query += " FROM users WHERE country = $1";
+        params.push(country);
+      } else if (!city) {
+        query += " FROM users WHERE country = $1 AND state = $2";
+        params.push(country, state);
+      } else {
+        query += " FROM users WHERE country = $1 AND state = $2 AND city = $3";
+        params.push(country, state, city);
+      }
+
+      const result = await client.query(query, params);
+      client.release();
+      reply.code(200).send(result.rows.map((row) => Object.values(row)[0]));
+    } catch (error) {
+      console.error("Error fetching filter options:", error);
+      reply
+        .code(500)
+        .send({
+          error:
+            process.env.NODE_ENV === "development"
+              ? error
+              : "Internal Server Error",
+        });
     }
+  });
 
-    const result = await client.query(query, params);
-    client.release();
-    reply.code(200).send(result.rows.map(row => Object.values(row)[0]));
+  fastify.get("/users", async (request, reply) => {
+    try {
+      const {
+        page = 1,
+        size = 100,
+        country,
+        state,
+        city,
+        village,
+        community,
+      } = request.query;
+      const offset = (page - 1) * size;
 
-  } catch (error) {
-    console.error("Error fetching filter options:", error);
-    reply.code(500).send({ error: process.env.NODE_ENV === 'development' ? error : "Internal Server Error" });
-  }
-});
+      const allowedFields = [
+        "username",
+        "firstname",
+        "lastname",
+        "dateofbirth",
+        "gender",
+        "community",
+        "city",
+        "state",
+        "country",
+        "village",
+      ];
 
-fastify.get("/users", async (request, reply) => {
-  try {
-    const { page = 1, size = 100, country, state, city, village, community } = request.query;
-    const offset = (page - 1) * size;
+      let query = `SELECT ${allowedFields.join(", ")} FROM users WHERE 1=1`;
+      let countQuery = `SELECT COUNT(*) FROM users WHERE 1=1`;
+      let params = [size, offset];
+      let countParams = [];
 
-    const allowedFields = [
-      'username',
-      'firstname',
-      'lastname',
-      'dateofbirth',
-      'gender',
-      'community',
-      'city',
-      'state',
-      'country',
-      'village'
-    ];
+      if (country) {
+        params.push(country);
+        countParams.push(country);
+        query += ` AND country = $${params.length}`;
+        countQuery += ` AND country = $${countParams.length}`;
+      }
+      if (state) {
+        params.push(state);
+        countParams.push(state);
+        query += ` AND state = $${params.length}`;
+        countQuery += ` AND state = $${countParams.length}`;
+      }
+      if (city) {
+        params.push(city);
+        countParams.push(city);
+        query += ` AND city = $${params.length}`;
+        countQuery += ` AND city = $${countParams.length}`;
+      }
+      if (village) {
+        params.push(village);
+        countParams.push(village);
+        query += ` AND village = $${params.length}`;
+        countQuery += ` AND village = $${countParams.length}`;
+      }
+      if (community) {
+        params.push(community);
+        countParams.push(community);
+        query += ` AND community = $${params.length}`;
+        countQuery += ` AND community = $${countParams.length}`;
+      }
 
-    let query = `SELECT ${allowedFields.join(', ')} FROM users WHERE 1=1`;
-    let countQuery = `SELECT COUNT(*) FROM users WHERE 1=1`;
-    let params = [size, offset];
-    let countParams = [];
+      query += " ORDER BY id LIMIT $1 OFFSET $2";
 
-    if (country) {
-      params.push(country);
-      countParams.push(country);
-      query += ` AND country = $${params.length}`;
-      countQuery += ` AND country = $${countParams.length}`;
+      const client = await pool.connect();
+      const result = await client.query(query, params);
+
+      const users = result.rows;
+
+      // Query for total number of users matching the filter
+      const filterTotalResult = await client.query(countQuery, countParams);
+      const filterTotalUsers = filterTotalResult.rows[0].count;
+
+      // Query for total number of users
+      const totalResult = await client.query("SELECT COUNT(*) FROM users");
+      const totalUsers = totalResult.rows[0].count;
+
+      client.release();
+
+      reply
+        .code(200)
+        .send({ users, total: totalUsers, filterTotal: filterTotalUsers });
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      reply
+        .code(500)
+        .send({
+          error:
+            process.env.NODE_ENV === "development"
+              ? error
+              : "Internal Server Error",
+        });
     }
-    if (state) {
-      params.push(state);
-      countParams.push(state);
-      query += ` AND state = $${params.length}`;
-      countQuery += ` AND state = $${countParams.length}`;
-    }
-    if (city) {
-      params.push(city);
-      countParams.push(city);
-      query += ` AND city = $${params.length}`;
-      countQuery += ` AND city = $${countParams.length}`;
-    }
-    if (village) {
-      params.push(village);
-      countParams.push(village);
-      query += ` AND village = $${params.length}`;
-      countQuery += ` AND village = $${countParams.length}`;
-    }
-    if (community) {
-      params.push(community);
-      countParams.push(community);
-      query += ` AND community = $${params.length}`;
-      countQuery += ` AND community = $${countParams.length}`;
-    }
-
-    query += ' ORDER BY id LIMIT $1 OFFSET $2';
-
-    const client = await pool.connect();
-    const result = await client.query(query, params);
-
-    const users = result.rows;
-
-    // Query for total number of users matching the filter
-    const filterTotalResult = await client.query(countQuery, countParams);
-    const filterTotalUsers = filterTotalResult.rows[0].count;
-
-    // Query for total number of users
-    const totalResult = await client.query("SELECT COUNT(*) FROM users");
-    const totalUsers = totalResult.rows[0].count;
-
-    client.release();
-
-    reply.code(200).send({ users, total: totalUsers, filterTotal: filterTotalUsers });
-  } catch (error) {
-    console.error("Error fetching user data:", error);
-    reply.code(500).send({ error: process.env.NODE_ENV === 'development' ? error : "Internal Server Error" });
-  }
-});
+  });
 
   fastify.post("/register", async (request, reply) => {
     try {
@@ -404,82 +467,88 @@ fastify.get("/users", async (request, reply) => {
         .send({ message: "An error occurred", error: err.message });
     }
   });
-  
+
   // Get all countries
   fastify.get("/user-countries", async (request, reply) => {
     const query = "SELECT DISTINCT country FROM users ORDER BY country";
-    const { rows } = await fastify.pg.query(query);
 
-    const countries = rows.map((row) => row.country);
+    const client = await pool.connect();
+    const result = await client.query(query);
+    client.release();
+
+    const countries = result.rows.map((row) => row.country);
 
     reply.send(countries);
   });
 
-    // Get states by country
-    fastify.get('/user-states', async (request, reply) => {
-      const { country } = request.query;
-    
-      const query = 'SELECT DISTINCT state FROM users WHERE country = $1 AND state IS NOT NULL ORDER BY state';
-    
-      const client = await pool.connect();
-      // Pass the `country` value in as a parameter to the query
-      const result = await client.query(query, [country]);
-      client.release();
-    
-      const { rows } = result;
-      const states = rows.map(row => row.state);
-    
-      reply.send(states);
-    });        
+  // Get states by country
+  fastify.get("/user-states", async (request, reply) => {
+    const { country } = request.query;
+
+    const query =
+      "SELECT DISTINCT state FROM users WHERE country = $1 AND state IS NOT NULL ORDER BY state";
+
+    const client = await pool.connect();
+    // Pass the `country` value in as a parameter to the query
+    const result = await client.query(query, [country]);
+    client.release();
+
+    const { rows } = result;
+    const states = rows.map((row) => row.state);
+
+    reply.send(states);
+  });
 
   // Get cities by state
-fastify.get("/user-cities", async (request, reply) => {
-  const { state } = request.query;
+  fastify.get("/user-cities", async (request, reply) => {
+    const { state } = request.query;
 
-  const query = "SELECT DISTINCT city FROM users WHERE state = $1 AND city IS NOT NULL ORDER BY city";
+    const query =
+      "SELECT DISTINCT city FROM users WHERE state = $1 AND city IS NOT NULL ORDER BY city";
 
-  const client = await pool.connect();
-  const result = await client.query(query, [state]);
-  client.release();
+    const client = await pool.connect();
+    const result = await client.query(query, [state]);
+    client.release();
 
-  const { rows } = result;
-  const cities = rows.map((row) => row.city);
+    const { rows } = result;
+    const cities = rows.map((row) => row.city);
 
-  reply.send(cities);
-});
+    reply.send(cities);
+  });
 
-// Get communities by state
-fastify.get("/user-communities", async (request, reply) => {
-  const { state } = request.query;
+  // Get communities by state
+  fastify.get("/user-communities", async (request, reply) => {
+    const { state } = request.query;
 
-  const query = "SELECT DISTINCT community FROM users WHERE state = $1 AND community IS NOT NULL ORDER BY community";
+    const query =
+      "SELECT DISTINCT community FROM users WHERE state = $1 AND community IS NOT NULL ORDER BY community";
 
-  const client = await pool.connect();
-  const result = await client.query(query, [state]);
-  client.release();
+    const client = await pool.connect();
+    const result = await client.query(query, [state]);
+    client.release();
 
-  const { rows } = result;
-  const communities = rows.map((row) => row.community);
+    const { rows } = result;
+    const communities = rows.map((row) => row.community);
 
-  reply.send(communities);
-});
+    reply.send(communities);
+  });
 
-// Get villages by community
-fastify.get("/user-villages", async (request, reply) => {
-  const { community } = request.query;
+  // Get villages by community
+  fastify.get("/user-villages", async (request, reply) => {
+    const { community } = request.query;
 
-  const query = "SELECT DISTINCT village FROM users WHERE community = $1 AND village IS NOT NULL ORDER BY village";
+    const query =
+      "SELECT DISTINCT village FROM users WHERE community = $1 AND village IS NOT NULL ORDER BY village";
 
-  const client = await pool.connect();
-  const result = await client.query(query, [community]);
-  client.release();
+    const client = await pool.connect();
+    const result = await client.query(query, [community]);
+    client.release();
 
-  const { rows } = result;
-  const villages = rows.map((row) => row.village);
+    const { rows } = result;
+    const villages = rows.map((row) => row.village);
 
-  reply.send(villages);
-});
-
+    reply.send(villages);
+  });
 }
 
 // fastify.register(routes);
