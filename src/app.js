@@ -315,9 +315,10 @@ async function routes(fastify, options) {
         city,
         village,
         community,
+        gender
       } = request.query;
       const offset = (page - 1) * size;
-
+  
       const allowedFields = [
         "username",
         "firstname",
@@ -330,12 +331,12 @@ async function routes(fastify, options) {
         "country",
         "village",
       ];
-
+  
       let query = `SELECT ${allowedFields.join(", ")} FROM users WHERE 1=1`;
       let countQuery = `SELECT COUNT(*) FROM users WHERE 1=1`;
       let params = [size, offset];
       let countParams = [];
-
+  
       if (country) {
         params.push(country);
         countParams.push(country);
@@ -366,24 +367,30 @@ async function routes(fastify, options) {
         query += ` AND community = $${params.length}`;
         countQuery += ` AND community = $${countParams.length}`;
       }
-
+      if (gender) {
+        params.push(gender);
+        countParams.push(gender);
+        query += ` AND gender = $${params.length}`;
+        countQuery += ` AND gender = $${countParams.length}`;
+      }
+  
       query += " ORDER BY id LIMIT $1 OFFSET $2";
-
+  
       const client = await pool.connect();
       const result = await client.query(query, params);
-
+  
       const users = result.rows;
-
+  
       // Query for total number of users matching the filter
       const filterTotalResult = await client.query(countQuery, countParams);
       const filterTotalUsers = filterTotalResult.rows[0].count;
-
+  
       // Query for total number of users
       const totalResult = await client.query("SELECT COUNT(*) FROM users");
       const totalUsers = totalResult.rows[0].count;
-
+  
       client.release();
-
+  
       reply
         .code(200)
         .send({ users, total: totalUsers, filterTotal: filterTotalUsers });
@@ -398,7 +405,7 @@ async function routes(fastify, options) {
               : "Internal Server Error",
         });
     }
-  });
+  });  
 
   fastify.post("/register", async (request, reply) => {
     try {
