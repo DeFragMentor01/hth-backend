@@ -317,7 +317,8 @@ async function routes(fastify, options) {
         community,
         gender,
         age,
-        ageRange
+        ageRange,
+        verified // Add verified parameter
       } = request.query;
       const offset = (page - 1) * size;
   
@@ -332,6 +333,7 @@ async function routes(fastify, options) {
         "state",
         "country",
         "village",
+        "verified" // Add verified to the selection fields
       ];
   
       let query = `SELECT ${allowedFields.join(", ")} FROM users WHERE 1=1`;
@@ -387,6 +389,12 @@ async function routes(fastify, options) {
         countParams.push(minAge, maxAge);
         query += ` AND EXTRACT(YEAR FROM AGE(dateofbirth)) BETWEEN $${params.length - 1} AND $${params.length}`;
         countQuery += ` AND EXTRACT(YEAR FROM AGE(dateofbirth)) BETWEEN $${countParams.length - 1} AND $${countParams.length}`;
+      }
+      if (verified !== undefined) {
+        params.push(verified === 'true' ? true : false); // Convert to boolean
+        countParams.push(verified === 'true' ? true : false); // Convert to boolean
+        query += ` AND verified = $${params.length}`;
+        countQuery += ` AND verified = $${countParams.length}`;
       }
   
       query += " ORDER BY id LIMIT $1 OFFSET $2";
