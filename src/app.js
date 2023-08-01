@@ -318,7 +318,8 @@ async function routes(fastify, options) {
         gender,
         age,
         ageRange,
-        verified // Add verified parameter
+        verified, // Add verified parameter
+        name  // Add name parameter
       } = request.query;
       const offset = (page - 1) * size;
   
@@ -395,6 +396,12 @@ async function routes(fastify, options) {
         countParams.push(verified === 'true' ? true : false); // Convert to boolean
         query += ` AND verified = $${params.length}`;
         countQuery += ` AND verified = $${countParams.length}`;
+      }
+      if (name) {
+        params.push(`%${name}%`);
+        countParams.push(`%${name}%`);
+        query += ` AND (firstname ILIKE $${params.length} OR lastname ILIKE $${params.length})`;
+        countQuery += ` AND (firstname ILIKE $${countParams.length} OR lastname ILIKE $${countParams.length})`;
       }
   
       query += " ORDER BY id LIMIT $1 OFFSET $2";
