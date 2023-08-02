@@ -213,67 +213,68 @@ async function routes(fastify, options) {
       }
     }
   );
-  fastify.get("/users/verified/count", async (request, reply) => {
-    try {
-      const { country, state, city, community, village } = request.query;
-      
-      let query = "SELECT verified, COUNT(*) FROM users WHERE 1=1";
-      let params = [];
-  
-      if (country) {
-        params.push(country);
-        query += ` AND country = $${params.length}`;
-      }
-      if (state) {
-        params.push(state);
-        query += ` AND state = $${params.length}`;
-      }
-      if (city) {
-        params.push(city);
-        query += ` AND city = $${params.length}`;
-      }
-      if (community) {
-        params.push(community);
-        query += ` AND community = $${params.length}`;
-      }
-      if (village) {
-        params.push(village);
-        query += ` AND village = $${params.length}`;
-      }
-  
-      query += " GROUP BY verified";
-  
-      const client = await pool.connect();
-      const result = await client.query(query, params);
-  
-      let verifiedCount = 0;
-      let nonVerifiedCount = 0;
-  
-      for (let row of result.rows) {
-        if (row.verified) {
-          verifiedCount = row.count;
-        } else {
-          nonVerifiedCount = row.count;
-        }
-      }
-  
-      client.release();
-    
-      reply
-        .code(200)
-        .send({ verifiedCount, nonVerifiedCount });
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      reply
-        .code(500)
-        .send({
-          error:
-            process.env.NODE_ENV === "development"
-              ? error
-              : "Internal Server Error",
-        });
+
+ fastify.get("/users/verified/count", async (request, reply) => {
+  try {
+    const { country, state, city, community, village } = request.query;
+
+    let query = "SELECT verified, COUNT(*) FROM users WHERE 1=1";
+    let params = [];
+
+    if (country) {
+      params.push(country);
+      query += ` AND country = $${params.length}`;
     }
-  });  
+    if (state) {
+      params.push(state);
+      query += ` AND province = $${params.length}`;
+    }
+    if (city) {
+      params.push(city);
+      query += ` AND city = $${params.length}`;
+    }
+    if (community) {
+      params.push(community);
+      query += ` AND district = $${params.length}`;
+    }
+    if (village) {
+      params.push(village);
+      query += ` AND village = $${params.length}`;
+    }
+
+    query += " GROUP BY verified";
+
+    const client = await pool.connect();
+    const result = await client.query(query, params);
+
+    let verifiedCount = 0;
+    let nonVerifiedCount = 0;
+
+    for (let row of result.rows) {
+      if (row.verified) {
+        verifiedCount = row.count;
+      } else {
+        nonVerifiedCount = row.count;
+      }
+    }
+
+    client.release();
+
+    reply
+      .code(200)
+      .send({ verifiedCount, nonVerifiedCount });
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    reply
+      .code(500)
+      .send({
+        error:
+          process.env.NODE_ENV === "development"
+            ? error
+            : "Internal Server Error",
+      });
+  }
+});
 
   fastify.post("/login", async (request, reply) => {
     try {
