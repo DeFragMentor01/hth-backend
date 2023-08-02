@@ -214,46 +214,67 @@ async function routes(fastify, options) {
     }
   );
 
-  const locationTypes = ['country', 'state', 'city', 'community', 'village'];
+ fastify.get("/users/verified/count", async (request, reply) => {
+  try {
+    const { country, state, city, community, village } = request.query;
 
-  locationTypes.forEach(location => {
-    fastify.get(`/users/verified/count/${location}`, async (request, reply) => {
-      try {
-        const locationValue = request.query[location];
-  
-        if (!locationValue) {
-          reply.code(400).send({ error: `Missing required query parameter: ${location}` });
-          return;
-        }
-  
-        let query = `SELECT verified, COUNT(*) FROM users WHERE ${location === 'state' ? 'province' : location} = $1 GROUP BY verified`;
-        const params = [locationValue];
-  
-        const client = await pool.connect();
-        const result = await client.query(query, params);
-  
-        let verifiedCount = 0;
-        let nonVerifiedCount = 0;
-  
-        for (let row of result.rows) {
-          if (row.verified) {
-            verifiedCount = row.count;
-          } else {
-            nonVerifiedCount = row.count;
-          }
-        }
-  
-        client.release();
-  
-        reply.code(200).send({ verifiedCount, nonVerifiedCount });
-      } catch (error) {
-        console.error(`Error fetching user data for ${location}:`, error);
-        reply.code(500).send({
-          error: process.env.NODE_ENV === "development" ? error : "Internal Server Error",
-        });
+    let query = "SELECT verified, COUNT(*) FROM users WHERE 1=1";
+    let params = [];
+
+    if (country) {
+      params.push(country);
+      query += ` AND country = $${params.length}`;
+    }
+    if (state) {
+      params.push(state);
+      query += ` AND province = $${params.length}`;
+    }
+    if (city) {
+      params.push(city);
+      query += ` AND city = $${params.length}`;
+    }
+    if (community) {
+      params.push(community);
+      query += ` AND district = $${params.length}`;
+    }
+    if (village) {
+      params.push(village);
+      query += ` AND village = $${params.length}`;
+    }
+
+    query += " GROUP BY verified";
+
+    const client = await pool.connect();
+    const result = await client.query(query, params);
+
+    let verifiedCount = 0;
+    let nonVerifiedCount = 0;
+
+    for (let row of result.rows) {
+      if (row.verified) {
+        verifiedCount = row.count;
+      } else {
+        nonVerifiedCount = row.count;
       }
-    });
-  });  
+    }
+
+    client.release();
+
+    reply
+      .code(200)
+      .send({ verifiedCount, nonVerifiedCount });
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    reply
+      .code(500)
+      .send({
+        error:
+          process.env.NODE_ENV === "development"
+            ? error
+            : "Internal Server Error",
+      });
+  }
+});
 
   fastify.post("/login", async (request, reply) => {
     try {
