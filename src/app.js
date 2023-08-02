@@ -213,35 +213,36 @@ async function routes(fastify, options) {
       }
     }
   );
+  
   fastify.get("/users/verified/count", async (request, reply) => {
     try {
-      const { country, state, city, community, village } = request.query;
-      
-      let query = "SELECT verified, COUNT(*) FROM users WHERE 1=1";
+      const { country, province, district, community, village } = request.query;
+        
+      let query = "SELECT u.verified, COUNT(*) FROM users u JOIN villages v ON u.village = v.id JOIN cities c ON v.city = c.id JOIN states s ON c.state = s.id WHERE 1=1";
       let params = [];
   
       if (country) {
         params.push(country);
-        query += ` AND country = $${params.length}`;
+        query += ` AND u.country = $${params.length}`;
       }
-      if (state) {
-        params.push(state);
-        query += ` AND state = $${params.length}`;
+      if (province) {
+        params.push(province);
+        query += ` AND s.id = $${params.length}`;
       }
-      if (city) {
-        params.push(city);
-        query += ` AND city = $${params.length}`;
+      if (district) {
+        params.push(district);
+        query += ` AND c.id = $${params.length}`;
       }
       if (community) {
         params.push(community);
-        query += ` AND community = $${params.length}`;
+        query += ` AND u.community = $${params.length}`;
       }
       if (village) {
         params.push(village);
-        query += ` AND village = $${params.length}`;
+        query += ` AND u.village = $${params.length}`;
       }
   
-      query += " GROUP BY verified";
+      query += " GROUP BY u.verified";
   
       const client = await pool.connect();
       const result = await client.query(query, params);
@@ -258,7 +259,7 @@ async function routes(fastify, options) {
       }
   
       client.release();
-    
+  
       reply
         .code(200)
         .send({ verifiedCount, nonVerifiedCount });
