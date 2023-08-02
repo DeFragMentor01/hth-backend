@@ -252,9 +252,9 @@ async function routes(fastify, options) {
   
       for (let row of result.rows) {
         if (row.verified) {
-          verifiedCount = row.count;
+          verifiedCount = parseInt(row.count);
         } else {
-          nonVerifiedCount = row.count;
+          nonVerifiedCount = parseInt(row.count);
         }
       }
   
