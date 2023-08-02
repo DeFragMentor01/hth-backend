@@ -318,8 +318,8 @@ async function routes(fastify, options) {
         gender,
         age,
         ageRange,
-        verified, // Add verified parameter
-        name  // Add name parameter
+        verified,
+        name,
       } = request.query;
       const offset = (page - 1) * size;
   
@@ -327,18 +327,25 @@ async function routes(fastify, options) {
         "username",
         "firstname",
         "lastname",
-        "EXTRACT(YEAR FROM AGE(dateofbirth)) AS age",
         "gender",
         "community",
         "city",
         "state",
         "country",
         "village",
-        "verified" // Add verified to the selection fields
+        "verified",
+        "computed_age",
       ];
   
-      let query = `SELECT ${allowedFields.join(", ")} FROM users WHERE 1=1`;
-      let countQuery = `SELECT COUNT(*) FROM users WHERE 1=1`;
+      let query = `SELECT ${allowedFields.join(", ")} FROM (
+          SELECT *, DATE_PART('year', AGE(dateofbirth)) AS computed_age 
+          FROM users
+        ) users_with_age WHERE 1=1`;
+      let countQuery = `SELECT COUNT(*) FROM (
+          SELECT *, DATE_PART('year', AGE(dateofbirth)) AS computed_age 
+          FROM users
+        ) users_with_age WHERE 1=1`;
+  
       let params = [size, offset];
       let countParams = [];
   
@@ -381,19 +388,19 @@ async function routes(fastify, options) {
       if (age) {
         params.push(age);
         countParams.push(age);
-        query += ` AND DATE_PART('year', AGE(dateofbirth)) = $${params.length}`;
-        countQuery += ` AND DATE_PART('year', AGE(dateofbirth)) = $${countParams.length}`;
+        query += ` AND computed_age = $${params.length}`;
+        countQuery += ` AND computed_age = $${countParams.length}`;
       }
       if (ageRange) {
-        const [minAge, maxAge] = ageRange.split('-');
+        const [minAge, maxAge] = ageRange.split("-");
         params.push(minAge, maxAge);
         countParams.push(minAge, maxAge);
-        query += ` AND DATE_PART('year', AGE(dateofbirth)) BETWEEN $${params.length - 1} AND $${params.length}`;
-        countQuery += ` AND DATE_PART('year', AGE(dateofbirth)) BETWEEN $${countParams.length - 1} AND $${countParams.length}`;
+        query += ` AND computed_age BETWEEN $${params.length - 1} AND $${params.length}`;
+        countQuery += ` AND computed_age BETWEEN $${countParams.length - 1} AND $${countParams.length}`;
       }
       if (verified !== undefined) {
-        params.push(verified === 'true' ? true : false); // Convert to boolean
-        countParams.push(verified === 'true' ? true : false); // Convert to boolean
+        params.push(verified === "true" ? true : false);
+        countParams.push(verified === "true" ? true : false);
         query += ` AND verified = $${params.length}`;
         countQuery += ` AND verified = $${countParams.length}`;
       }
@@ -435,7 +442,7 @@ async function routes(fastify, options) {
               : "Internal Server Error",
         });
     }
-  });  
+  });    
 
   fastify.post("/register", async (request, reply) => {
     try {
