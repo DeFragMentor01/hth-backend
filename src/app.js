@@ -381,15 +381,15 @@ async function routes(fastify, options) {
       if (age) {
         params.push(age);
         countParams.push(age);
-        query += ` AND EXTRACT(YEAR FROM AGE(dateofbirth)) = $${params.length}`;
-        countQuery += ` AND EXTRACT(YEAR FROM AGE(dateofbirth)) = $${countParams.length}`;
+        query += ` AND DATE_PART('year', AGE(dateofbirth)) = $${params.length}`;
+        countQuery += ` AND DATE_PART('year', AGE(dateofbirth)) = $${countParams.length}`;
       }
       if (ageRange) {
         const [minAge, maxAge] = ageRange.split('-');
         params.push(minAge, maxAge);
         countParams.push(minAge, maxAge);
-        query += ` AND EXTRACT(YEAR FROM AGE(dateofbirth)) BETWEEN $${params.length - 1} AND $${params.length}`;
-        countQuery += ` AND EXTRACT(YEAR FROM AGE(dateofbirth)) BETWEEN $${countParams.length - 1} AND $${countParams.length}`;
+        query += ` AND DATE_PART('year', AGE(dateofbirth)) BETWEEN $${params.length - 1} AND $${params.length}`;
+        countQuery += ` AND DATE_PART('year', AGE(dateofbirth)) BETWEEN $${countParams.length - 1} AND $${countParams.length}`;
       }
       if (verified !== undefined) {
         params.push(verified === 'true' ? true : false); // Convert to boolean
