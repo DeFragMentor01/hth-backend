@@ -105,10 +105,12 @@ async function routes(fastify, options) {
       JOIN districts AS d ON p.id = d.province_id
       JOIN villages AS v ON d.id = v.district_id
       WHERE 
-        (c.id = $1 OR $1 IS NULL) AND 
-        (p.id = $2 OR $2 IS NULL) AND 
-        (d.id = $3 OR $3 IS NULL) AND 
-        (LOWER(v.name) LIKE LOWER($4) OR $4 IS NULL);
+        (
+          (c.id = $1 OR $1 IS NULL) AND 
+          (p.id = $2 OR $2 IS NULL) AND 
+          (d.id = $3 OR $3 IS NULL)
+        ) AND 
+        (v.name LIKE $4 OR $4 IS NULL);
     `;
     const params = [
       country_id,
