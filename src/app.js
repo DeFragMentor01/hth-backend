@@ -95,22 +95,28 @@ async function routes(fastify, options) {
   });
 
   fastify.get("/villages", async (request, reply) => {
-    const { country_id, province_id, district_id } = request.query;
+    const { country_id, province_id, district_id, village_name } = request.query;
     const client = await pool.connect();
-
+  
     const query = `
-    SELECT v.* 
-    FROM countries AS c
-    JOIN provinces AS p ON c.id = p.country_id
-    JOIN districts AS d ON p.id = d.province_id
-    JOIN villages AS v ON d.id = v.district_id
-    WHERE 
-      (c.id = $1 OR $1 IS NULL) AND 
-      (p.id = $2 OR $2 IS NULL) AND 
-      (d.id = $3 OR $3 IS NULL);
-  `;
-    const params = [country_id, province_id, district_id];
-
+      SELECT v.* 
+      FROM countries AS c
+      JOIN provinces AS p ON c.id = p.country_id
+      JOIN districts AS d ON p.id = d.province_id
+      JOIN villages AS v ON d.id = v.district_id
+      WHERE 
+        (c.id = $1 OR $1 IS NULL) AND 
+        (p.id = $2 OR $2 IS NULL) AND 
+        (d.id = $3 OR $3 IS NULL) AND 
+        (LOWER(v.name) LIKE LOWER($4) OR $4 IS NULL);
+    `;
+    const params = [
+      country_id,
+      province_id,
+      district_id,
+      village_name ? `%${village_name}%` : village_name
+    ];
+  
     try {
       const res = await client.query(query, params);
       reply.send(res.rows);
@@ -122,7 +128,7 @@ async function routes(fastify, options) {
     } finally {
       client.release();
     }
-  });
+  });  
 
   // Get the count of villages in a specific country
   fastify.get("/villages/count/country/:country_id", async (request, reply) => {
