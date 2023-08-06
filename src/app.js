@@ -97,27 +97,45 @@ async function routes(fastify, options) {
   fastify.get("/villages", async (request, reply) => {
     const { country_id, province_id, district_id, village_name } = request.query;
     const client = await pool.connect();
+
+    const query = `
+    SELECT v.* 
+    FROM countries AS c
+    JOIN provinces AS p ON c.id = p.country_id
+    JOIN districts AS d ON p.id = d.province_id
+    JOIN villages AS v ON d.id = v.district_id
+    WHERE 
+      (c.id = $1 OR $1 IS NULL) AND 
+      (p.id = $2 OR $2 IS NULL) AND 
+      (d.id = $3 OR $3 IS NULL) AND 
+      (v.name = $4 OR $4 IS NULL);
+  `;
+    const params = [country_id, province_id, district_id, village_name];
+
+    try {
+      const res = await client.query(query, params);
+      reply.send(res.rows);
+    } catch (err) {
+      console.error("Error occurred:", err);
+      reply
+        .status(500)
+        .send({ message: "An error occurred", error: err.message });
+    } finally {
+      client.release();
+    }
+  });
+
+  fastify.get("/villages/search", async (request, reply) => {
+    const { village_name } = request.query;
+    const client = await pool.connect();
   
     const query = `
       SELECT v.* 
-      FROM countries AS c
-      JOIN provinces AS p ON c.id = p.country_id
-      JOIN districts AS d ON p.id = d.province_id
-      JOIN villages AS v ON d.id = v.district_id
-      WHERE 
-        (
-          (c.id = $1 OR $1 IS NULL) AND 
-          (p.id = $2 OR $2 IS NULL) AND 
-          (d.id = $3 OR $3 IS NULL)
-        ) AND 
-        (v.name LIKE $4 OR $4 IS NULL);
+      FROM villages AS v
+      WHERE v.name LIKE $1;
     `;
-    const params = [
-      country_id,
-      province_id,
-      district_id,
-      village_name ? `%${village_name}%` : village_name
-    ];
+  
+    const params = [village_name ? `%${village_name}%` : village_name];
   
     try {
       const res = await client.query(query, params);
