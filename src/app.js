@@ -129,16 +129,25 @@ async function routes(fastify, options) {
     const { village_name } = request.query;
     const client = await pool.connect();
   
+    // Use '=' operator for exact match
     const query = `
       SELECT v.* 
       FROM villages AS v
-      WHERE v.name LIKE $1;
+      WHERE v.name = $1;
     `;
   
-    const params = [village_name ? `%${village_name}%` : village_name];
+    const params = [village_name];
   
     try {
       const res = await client.query(query, params);
+  
+      // Check if any rows were returned
+      if (res.rows.length === 0) {
+        return reply
+          .status(404)
+          .send({ message: "No village found with the provided name." });
+      }
+  
       reply.send(res.rows);
     } catch (err) {
       console.error("Error occurred:", err);
