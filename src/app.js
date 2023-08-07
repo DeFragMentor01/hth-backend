@@ -125,6 +125,36 @@ async function routes(fastify, options) {
     }
   });
 
+  fastify.get("/village/search-suggestion", async (request, reply) => {
+    const client = await pool.connect();
+  
+    // Select all village names from the database
+    const query = `
+      SELECT v.name
+      FROM villages AS v;
+    `;
+  
+    try {
+      const res = await client.query(query);
+  
+      // Check if any rows were returned
+      if (res.rows.length === 0) {
+        return reply
+          .status(404)
+          .send({ message: "No villages found." });
+      }
+  
+      reply.send(res.rows);
+    } catch (err) {
+      console.error("Error occurred:", err);
+      reply
+        .status(500)
+        .send({ message: "An error occurred", error: err.message });
+    } finally {
+      client.release();
+    }
+  });  
+
   fastify.get("/villages/search", async (request, reply) => {
     const { village_name } = request.query;
     const client = await pool.connect();
