@@ -129,14 +129,14 @@ async function routes(fastify, options) {
     const { village_name } = request.query;
     const client = await pool.connect();
   
-    // Use '=' operator for exact match
+    // Use 'ILIKE' operator for partial match, '%' is a wildcard that matches any sequence of characters
     const query = `
       SELECT v.* 
       FROM villages AS v
-      WHERE v.name = $1;
+      WHERE v.name ILIKE $1;
     `;
   
-    const params = [village_name];
+    const params = [`%${village_name}%`];
   
     try {
       const res = await client.query(query, params);
@@ -157,7 +157,8 @@ async function routes(fastify, options) {
     } finally {
       client.release();
     }
-  });  
+  });
+  
 
   // Get the count of villages in a specific country
   fastify.get("/villages/count/country/:country_id", async (request, reply) => {
