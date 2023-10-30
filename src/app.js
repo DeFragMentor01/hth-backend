@@ -108,7 +108,7 @@ async function routes(fastify, options) {
       (c.id = $1 OR $1 IS NULL) AND 
       (p.id = $2 OR $2 IS NULL) AND 
       (d.id = $3 OR $3 IS NULL) AND 
-      (v.name = $4 OR $4 IS NULL);
+      (v.village_name = $4 OR $4 IS NULL);
   `;
     const params = [country_id, province_id, district_id, village_name];
 
@@ -130,7 +130,7 @@ async function routes(fastify, options) {
   
     // Select all village names from the database
     const query = `
-      SELECT v.name
+      SELECT v.village_name
       FROM villages AS v;
     `;
   
@@ -163,7 +163,7 @@ async function routes(fastify, options) {
     const query = `
       SELECT v.* 
       FROM villages AS v
-      WHERE v.name = $1;
+      WHERE v.village_name = $1;
     `;
   
     const params = [village_name];
