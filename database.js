@@ -2,7 +2,7 @@ const { Pool } = require("pg");
 
 const pool = new Pool({
   connectionString:
-    "postgres://themainguy:qjaTCSBsraPKLNsyC7rnaYRJJGvcxyBE@dpg-cie7nft9aq0ce3bbjhgg-a.oregon-postgres.render.com/itribes_database_ur70",
+    "postgres://DeFragMentor01:kKyTtNEXs76U@ep-late-silence-99758754.us-east-2.aws.neon.tech/neondb",
   ssl: {
     rejectUnauthorized: false,
   },
